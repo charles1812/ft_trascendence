@@ -1,0 +1,56 @@
+services:
+  frontend:
+    image: transcendence-frontend
+    build:
+      context: .
+      dockerfile: ./frontend.Dockerfile
+    hostname: ${FRONTEND_HOST}
+    environment:
+      - FRONTEND_HOST
+      - FRONTEND_HTTP_PORT
+      - FRONTEND_HTTPS_PORT
+      - BACKEND_HOST
+      - BACKEND_HTTP_PORT
+      - INGRESS_HTTPS_PORT
+    networks:
+      - backend
+    ports:
+      - ${INGRESS_HTTP_PORT}:${FRONTEND_HTTP_PORT}
+      - ${INGRESS_HTTPS_PORT}:${FRONTEND_HTTPS_PORT}
+    volumes:
+      - frontend_certs:/etc/nginx/certs/
+    depends_on:
+      - backend
+    develop:
+      watch:
+        - action: rebuild
+          path: ./frontend.Dockerfile
+        - action: rebuild
+          path: ./frontend
+        - action: rebuild
+          path: ./shared
+  backend:
+    image: transcendence-backend
+    build:
+      context: .
+      dockerfile: ./backend.Dockerfile
+    hostname: ${BACKEND_HOST}
+    environment:
+      - BACKEND_HOST
+      - BACKEND_HTTP_PORT
+    networks:
+      - backend
+    develop:
+      watch:
+        - action: rebuild
+          path: ./backend.Dockerfile
+        - action: rebuild
+          path: ./backend
+        - action: rebuild
+          path: ./shared
+
+volumes:
+  frontend_certs:
+
+networks:
+  backend:

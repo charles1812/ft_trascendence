@@ -26,7 +26,7 @@ func main() {
 	clearScreen()
 	displayWelcome()
 
-	f, err := os.OpenFile("testlogfile", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := os.OpenFile("clipongo.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
 	}
@@ -45,7 +45,8 @@ func main() {
 			}
 		case "2":
 			clearScreen()
-			fmt.Println("\n The entire codebase was provided by ChatGPT")
+			fmt.Println("\n Bye-Bye and thank you for playing")
+			fmt.Println("\n The codebase was provided by Moutillon Tech & Associates")
 			os.Exit(0)
 		default:
 			fmt.Println("\n Invalid choice. Please try again.")
@@ -105,7 +106,7 @@ func handleLogin() (*api.Client, bool) {
 		return nil, false
 	}
 
-	client := api.NewClient("https://localhost", "", username)
+	client := api.NewClient("https://localhost:1443", "", username)
 	token, err := client.Authenticate(username)
 	if err != nil {
 		fmt.Printf("\n Authentication failed: %v\n", err)
@@ -141,7 +142,7 @@ func handleGameMode(client *api.Client) bool {
 				fmt.Printf("\nFailed to create game: %v\n", err)
 				fmt.Println("Press Enter to continue...")
 				reader.ReadBytes('\n')
-				continue ///////////////
+				continue
 			}
 			fmt.Printf("\nGame created! Waiting for opponent to join...\n")
 			pong.StartGame(client, game.ID, 1)

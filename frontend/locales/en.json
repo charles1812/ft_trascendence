@@ -1,0 +1,73 @@
+{
+  "meta": {
+    "title": "Pong Game"
+  },
+  "profile": {
+    "username": "Username"
+  },
+  "app": {
+    "name": "Pong",
+    "subtitle": "THE PONG GAME"
+  },
+  "message": {
+    "started_game": "Started game",
+    "created_game": "Created game",
+    "joined_game": "Joined game",
+    "you_won": "You won",
+    "username_won": "👑 {{username}} 👑",
+    "you_lost": "You lost"
+  },
+  "menu": {
+    "welcome_title": "Welcome to Pong",
+    "welcome_subtitle": "Choose your mode and press start",
+    "mode_1v1": "Start Game",
+    "start_tournament": "Start Tournament",
+    "mode_1v1_multiplayer": "Multiplayer",
+    "join_1v1_multiplayer": "Join Multiplayer",
+    "mode_2v2": "Start 2v2 Game",
+    "join_2v2": "Join 2v2 Game",
+    "login": "Login",
+    "sign_out": "Sign Out"
+  },
+  "in_game": {
+    "menu_title": "Game Menu",
+    "menu_subtitle": "Choose your mode and press start",
+    "resume": "Resume Game",
+    "exit": "Exit Game"
+  },
+  "tournament": {
+    "ready_title": "Ready for Tournament",
+    "matchup_text": "{{player1}} vs {{player2}}",
+    "start_round": "Start Round",
+    "upcoming_matches": "Upcoming Matches",
+    "gameReady": "Game Ready"
+  },
+  "prompt": {
+    "enter_username": "Enter your username",
+    "enter_friend_username1v1": "Enter friend username:(or <ai> to play against a bot)",
+    "enter_friend_username": "Enter friend username:",
+    "enter_friend_username2": "Enter friend username 2:",
+    "enter_friend_username3": "Enter friend username 3:",
+    "enter_friend_username4": "Enter friend username 4:",
+    "enter_player_count": "Enter the number of players (at least 3):",
+    "enter_player_username": "Enter username for Player {{player}}:",
+    "cancel": "Cancel",
+    "ok": "OK",
+    "friend_username_empty": "Friend username can't be empty"
+  },
+  "alert": {
+    "message": "Alert",
+    "ok": "OK",
+    "failed_start_game": "Failed to start game",
+    "failed_login": "Failed to start game, you need to login",
+    "failed_newpong": "Failed to start multiplayer game, friend username empty",
+    "failed_create_game": "Failed to start multiplayer game, you need to be logged in",
+    "failed_join_multiplayer": "Failed to join multiplayer game",
+    "failed_join_login": "Failed to join multiplayer game, you need to be logged in",
+    "username_required": "Username is required.",
+    "username_length": "Username must be 10 characters or fewer.",
+    "login_failed": "Login failed.",
+    "bad_username2": "Bad username",
+    "failed_start_tournament": "Failed to start tournament"
+  }
+}

@@ -1,67 +1,70 @@
 // src/ai.ts
-import { sendMoveForAI, gameState } from "./main.ts"; // your existing move functions
+import { sendMove, gameState } from "./main.ts";
+import { PONG } from "@samir/shared/constants";
 
-//let aiInterval: NodeJS.Timeout | null = null;
-//let aiActive = false;
-let aiLastKey: string | null = null;
-let key: string;
+let aiInterval: NodeJS.Timeout | null = null;
+let aiLastKey: "🤖" | "🦿" | null = null;
 
-export async function startAI(paddleIndex: number) {
-  //if (paddleIndex < 0 || paddleIndex > 3) return;
-  //aiActive = true;
+export function startAI(): void {
+  if (aiInterval) return;
+  const paddleX = PONG.map.xSize - PONG.paddle.xSize;
+  const H = PONG.map.ySize;
 
-  setInterval(() => {
-    paddleIndex = 0;
+  aiInterval = setInterval(() => {
+    const { ball, players } = gameState;
+    const paddle = players[1]?.paddle;
+    if (!ball || !paddle) return;
+    const dx = paddleX - ball.x;
+    if (ball.vx === 0) return;
+    const t = dx / ball.vx;
+    if (t <= 0) return;
 
-    const ballY = gameState.ball.y;
-    //const reactionZone = 15 + Math.random() * 10; // Between 15 and 25 pixels
-    const reactionZone = 1;
+    let y = ball.y + ball.vy * t;
+    const period = 2 * H;
+    y = ((y % period) + period) % period;
+    const predictedY = y > H ? period - y : y;
 
-    const offset = 100 / 2; // Half paddle height
-    const paddleCenterY = gameState.players[1].paddle.y + offset;
+    const paddleCenter = paddle.y + PONG.paddle.ySize / 2;
+    const delta = predictedY - paddleCenter;
 
-    // Simulate a delay in reaction and "zone of uncertainty"
-    const verticalDelta = ballY - paddleCenterY;
+    const DEAD_ZONE = 40;
+    const MIN_HOLD = 100;
+    const MAX_HOLD = 600;
+    let desired: "🤖" | "🦿" | null = null;
+    if (delta < -DEAD_ZONE) desired = "🤖";
+    else if (delta > DEAD_ZONE) desired = "🦿";
 
-    if (Math.abs(verticalDelta) > reactionZone) {
-      key =
-        verticalDelta < 0
-          ? paddleIndex === 0 || paddleIndex === 1
-            ? "w"
-            : "ArrowUp"
-          : paddleIndex === 0 || paddleIndex === 1
-            ? "s"
-            : "ArrowDown";
-
-      // Stop previous movement if key has changed
-      if (aiLastKey && aiLastKey !== key) {
-        sendMoveForAI(paddleIndex, key, true);
-        //console.log(`[AI] Stopping ${aiLastKey}`);
-      }
-
-      console.log(`[AI] Ball Y: ${ballY}, Paddle Y: ${paddleCenterY}, Δ: ${verticalDelta.toFixed(1)}`);
-
-      sendMoveForAI(paddleIndex, key, true);
-      aiLastKey = key;
-    } else {
-      // Within tolerance zone: stop movement
-      if (aiLastKey) {
-        sendMoveForAI(paddleIndex, key, true);
-        //console.log(`[AI] Moving ${key} (true)`);
-        aiLastKey = null;
-      }
+    if (aiLastKey && aiLastKey !== desired) {
+      sendMove(aiLastKey, false);
+      aiLastKey = null;
     }
-  }, 1000); // Refresh every second
+    if (desired) {
+      sendMove(desired, true);
+      aiLastKey = desired;
+
+      // how far are we beyond the dead-zone?
+      const overshoot = Math.max(0, Math.abs(delta) - DEAD_ZONE);
+      // normalize to [0…1] over the remaining playfield height
+      const ratio = Math.min(1, overshoot / (H / 2 - DEAD_ZONE));
+      // linearly interpolate into your [MIN_HOLD…MAX_HOLD] window
+      const holdTime = MIN_HOLD + ratio * (MAX_HOLD - MIN_HOLD);
+
+      setTimeout(() => {
+        if (aiLastKey === desired) {
+          sendMove(desired, false);
+          aiLastKey = null;
+        }
+      }, holdTime);
+    } else if (aiLastKey) {
+      sendMove(aiLastKey, false);
+      aiLastKey = null;
+    }
+  }, 1000);
 }
 
-// export function stopAI() {
-//   if (aiInterval) {
-//     clearInterval(aiInterval);
-//     aiInterval = null;
-//   }
-//   if (aiLastKey) {
-//     sendMoveForAI(paddleIndex, key, false);
-//     aiLastKey = null;
-//   }
-//   aiActive = false;
-// }
+export function stopAI(): void {
+  if (aiInterval) clearInterval(aiInterval);
+  if (aiLastKey) sendMove(aiLastKey, false);
+  aiInterval = null;
+  aiLastKey = null;
+}

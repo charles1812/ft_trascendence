@@ -1,11 +1,7 @@
 # ft_transcendence
 
-## Dev dependencies
+# to launch the website on localhost
 
-### Yarn
+    commandline: docker compose up -d
 
-Install yarn:
-
-```sh
-npm install -g corepack
-```
+    navigator: http://transcendence.localhost:1080

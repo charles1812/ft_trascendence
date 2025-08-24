@@ -1,0 +1,73 @@
+{
+  "meta": {
+    "title": "Pong Plunder"
+  },
+  "profile": {
+    "username": "Scallywag Handle"
+  },
+  "app": {
+    "name": "Pong",
+    "subtitle": "ARRR! THE PONG PLUNDER!"
+  },
+  "message": {
+    "started_game": "Avast! The bout be underway!",
+    "created_game": "Arr! A new bout be forged!",
+    "joined_game": "I be aboard the match!",
+    "you_won": "Yo-ho-ho! Ye be victorious!",
+    "username_won": "🏴‍☠️ {{username}}, ye be the cap'n o' the seas! 🏴‍☠️",
+    "you_lost": "Shiver me timbers! Ye be defeated!"
+  },
+  "menu": {
+    "welcome_title": "Ahoy aboard Pong!",
+    "welcome_subtitle": "Pick yer course and heave ho to begin!",
+    "mode_1v1": "Set sail solo",
+    "start_tournament": "Commence the grand melee",
+    "mode_1v1_multiplayer": "Crew Clash",
+    "join_1v1_multiplayer": "Join the fray",
+    "mode_2v2": "Set sail 2v2",
+    "join_2v2": "Join the 2v2 skirmish",
+    "login": "Brand yer mark",
+    "sign_out": "Walk the plank"
+  },
+  "in_game": {
+    "menu_title": "Captain's Orders",
+    "menu_subtitle": "Chart yer course and heave away!",
+    "resume": "Resume the voyage",
+    "exit": "Abandon ship"
+  },
+  "tournament": {
+    "ready_title": "Ready fer the grand melee",
+    "matchup_text": "{{player1}} challenges {{player2}}!",
+    "start_round": "Let slip the dogs o' war",
+    "upcoming_matches": "Aye, on deck bouts",
+    "gameReady": "All hands hoay! The bout be ready"
+  },
+  "prompt": {
+    "enter_username": "Enter yer scurvy name now",
+    "enter_friend_username1v1": "Avast! Enter yer matey’s username: (or <ai> t’ do battle with a scurvy bot)",
+    "enter_friend_username": "Enter yer matey's scurvy name:",
+    "enter_friend_username2": "Enter yer second matey's scurvy name:",
+    "enter_friend_username3": "Enter yer third matey's scurvy name:",
+    "enter_friend_username4": "Enter yer fourth matey's scurvy name:",
+    "enter_player_count": "How many buccaneers (no fewer than 3) make ready?",
+    "enter_player_username": "What be the name o' pirate {{player}}?",
+    "cancel": "Avast!",
+    "ok": "Aye aye!",
+    "friend_username_empty": "Yer matey's name can't be naught, ye scurvy dog!"
+  },
+  "alert": {
+    "message": "Avast!",
+    "ok": "Aye!",
+    "failed_start_game": "Arrr! Failed to weigh anchor!",
+    "failed_login": "Blimey! Can't set sail, ye must brand yer mark first!",
+    "failed_newpong": "Blunder! Can't rally the crew, mateship be unnamed!",
+    "failed_create_game": "Avast! Can't muster the crew, ye haven't branded yer mark!",
+    "failed_join_multiplayer": "Arr! Ye be denied entry to the crew!",
+    "failed_join_login": "Avast! Ye can't join the crew; brand yer mark first!",
+    "username_required": "Ye must choose a name, ye scallywag!",
+    "username_length": "Yer name be too long; keep it under 10 letters, ye bilge rat!",
+    "login_failed": "Arrr! Branding yer mark failed!",
+    "bad_username2": "Foul name, ye mangy dog!",
+    "failed_start_tournament": "Shiver me timbers! Could not unleash the grand melee!"
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "meta": {
+    "title": "Le Pong"
+  },
+  "profile": {
+    "username": "Nom d'utilisateur"
+  },
+  "app": {
+    "name": "Pong",
+    "subtitle": "LE PONG"
+  },
+  "message": {
+    "started_game": "Partie démarrée",
+    "created_game": "Partie créée",
+    "joined_game": "Partie rejointe",
+    "you_won": "Vous avez gagné",
+    "username_won": "👑 {{username}} 👑",
+    "you_lost": "Vous avez perdu"
+  },
+  "menu": {
+    "welcome_title": "Bienvenue sur Pong",
+    "welcome_subtitle": "Choisissez votre mode et appuyez sur Démarrer",
+    "mode_1v1": "Démarrer le jeu",
+    "start_tournament": "Démarrer le tournoi",
+    "mode_1v1_multiplayer": "Multijoueur",
+    "join_1v1_multiplayer": "Rejoindre le multijoueur",
+    "mode_2v2": "Démarrer une partie 2v2",
+    "join_2v2": "Rejoindre une partie 2v2",
+    "login": "Connexion",
+    "sign_out": "Déconnexion"
+  },
+  "in_game": {
+    "menu_title": "Menu",
+    "menu_subtitle": "Choisissez votre mode et appuyez sur Démarrer",
+    "resume": "Reprendre la partie",
+    "exit": "Quitter la partie"
+  },
+  "tournament": {
+    "ready_title": "Prêt pour le tournoi",
+    "matchup_text": "{{player1}} vs {{player2}}",
+    "start_round": "Démarrer le round",
+    "upcoming_matches": "Matchs à venir",
+    "gameReady": "Prochaine partie prête"
+  },
+  "prompt": {
+    "enter_username": "Entrez votre nom d'utilisateur",
+    "enter_friend_username1v1": "Entrez le nom d'un ami : (ou <ai> pour jouer contre un bot)",
+    "enter_friend_username": "Entrez le nom d'utilisateur de l'ami :",
+    "enter_friend_username2": "Entrez le nom d'utilisateur de l'ami 2:",
+    "enter_friend_username3": "Entrez le nom d'utilisateur de l'ami 3:",
+    "enter_friend_username4": "Entrez le nom d'utilisateur de l'ami 4:",
+    "enter_player_count": "Entrez le nombre de joueurs (au moins 3) :",
+    "enter_player_username": "Entrez le nom d'utilisateur pour le joueur {{player}} :",
+    "cancel": "Annuler",
+    "ok": "OK",
+    "friend_username_empty": "Le nom d'utilisateur de l'ami ne peut pas être vide"
+  },
+  "alert": {
+    "message": "Alerte",
+    "ok": "OK",
+    "failed_start_game": "Échec du démarrage du jeu",
+    "failed_login": "Échec du démarrage du jeu, vous devez vous connecter",
+    "failed_newpong": "Échec du démarrage du jeu multijoueur, nom d'utilisateur de l'ami vide",
+    "failed_create_game": "Échec du démarrage du jeu multijoueur, vous devez être connecté",
+    "failed_join_multiplayer": "Échec de la jonction au jeu multijoueur",
+    "failed_join_login": "Échec de la jonction au jeu multijoueur, vous devez être connecté",
+    "username_required": "Le nom d'utilisateur est requis.",
+    "username_length": "Le nom d'utilisateur doit comporter au maximum 10 caractères.",
+    "login_failed": "Échec de la connexion.",
+    "bad_username2": "Nom d'utilisateur invalide",
+    "failed_start_tournament": "Échec du démarrage du tournoi"
+  }
+}

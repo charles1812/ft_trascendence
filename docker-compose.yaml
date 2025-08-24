@@ -38,6 +38,7 @@ services:
     environment:
       - BACKEND_HOST
       - BACKEND_HTTP_PORT
+      - JWT_SECRET
     networks:
       - backend
     develop:

@@ -1,0 +1,73 @@
+{
+  "meta": {
+    "title": "Gioco di Pong"
+  },
+  "profile": {
+    "username": "Nome utente"
+  },
+  "app": {
+    "name": "Pong",
+    "subtitle": "IL GIOCO DEL PONG"
+  },
+  "message": {
+    "started_game": "Partita avviata",
+    "created_game": "Partita creata",
+    "joined_game": "Sei entrato nella partita",
+    "you_won": "Hai vinto",
+    "username_won": "👑 {{username}} 👑",
+    "you_lost": "Hai perso"
+  },
+  "menu": {
+    "welcome_title": "Benvenuto in Pong",
+    "welcome_subtitle": "Scegli la modalità e premi Avvia",
+    "mode_1v1": "1 VS 1",
+    "start_tournament": "Avvia torneo",
+    "mode_1v1_multiplayer": "Multigiocatore",
+    "join_1v1_multiplayer": "Entra in multigiocatore",
+    "mode_2v2": "2 VS 2",
+    "join_2v2": "Unisciti a 2 VS 2",
+    "login": "Accedi",
+    "sign_out": "Esci"
+  },
+  "in_game": {
+    "menu_title": "Menu di gioco",
+    "menu_subtitle": "Scegli la modalità e premi Avvia",
+    "resume": "Riprendi gioco",
+    "exit": "Esci dal gioco"
+  },
+  "tournament": {
+    "ready_title": "Pronto per il torneo",
+    "matchup_text": "{{player1}} vs {{player2}}",
+    "start_round": "Inizia round",
+    "upcoming_matches": "Prossime partite",
+    "gameReady": "Gioco pronto"
+  },
+  "prompt": {
+    "enter_username": "Inserisci il tuo nome utente",
+    "enter_friend_username1v1": "Inserisci il nome utente di un amico: (o <ai> per sfidare un bot)",
+    "enter_friend_username": "Inserisci il nome utente dell’amico:",
+    "enter_friend_username2": "Inserisci il nome utente dell’amico 2:",
+    "enter_friend_username3": "Inserisci il nome utente dell’amico 3:",
+    "enter_friend_username4": "Inserisci il nome utente dell’amico 4:",
+    "enter_player_count": "Inserisci il numero di giocatori (almeno 3):",
+    "enter_player_username": "Inserisci il nome utente per il giocatore {{player}}:",
+    "cancel": "Annulla",
+    "ok": "OK",
+    "friend_username_empty": "Il nome utente dell’amico non può essere vuoto"
+  },
+  "alert": {
+    "message": "Avviso",
+    "ok": "OK",
+    "failed_start_game": "Impossibile avviare il gioco",
+    "failed_login": "Impossibile avviare il gioco: devi aver effettuato l’accesso",
+    "failed_newpong": "Impossibile avviare il gioco multigiocatore: nessun nome utente amico fornito",
+    "failed_create_game": "Impossibile creare la partita multigiocatore: devi essere loggato",
+    "failed_join_multiplayer": "Impossibile unirsi alla partita multigiocatore",
+    "failed_join_login": "Impossibile unirsi alla partita multigiocatore: devi aver effettuato l’accesso",
+    "username_required": "Il nome utente è obbligatorio.",
+    "username_length": "Il nome utente deve contenere al massimo 10 caratteri.",
+    "login_failed": "Accesso fallito.",
+    "bad_username2": "Nome utente non valido",
+    "failed_start_tournament": "Impossibile avviare il torneo"
+  }
+}

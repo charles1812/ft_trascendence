@@ -6,8 +6,9 @@ import type {
   PostGameType,
   SocketDataType,
 } from "@samir/shared/schemas";
+import { t } from "./i18n";
 
-import { startAI } from "./ai";
+import { startAI, stopAI } from "./ai";
 
 let token: string = "";
 let gameId: string = "";
@@ -22,32 +23,23 @@ let newpong = false;
 let gameStarted = false;
 let tournamentStarted = false;
 let multiplayerGameStarted = false;
+export let aiControllingPaddle = false;
 let socket: WebSocket;
 export let gameState: GameType;
 let players: Player[] = [];
+let closeSocket = false;
 
 type Player = {
   id: number;
   username: string;
 };
 
-export function sendMoveForAI(paddle: number, key: string, moving: boolean) {
-  const direction = key === "w" || key === "ArrowUp" ? "up"
-                  : key === "s" || key === "ArrowDown" ? "down"
-                  : null;
-  if (direction === null || !socket || socket.readyState !== WebSocket.OPEN) return;
-
-  const payload: SocketDataType = {
-    type: "paddle_move",
-    payload: {
-      paddle,
-      direction,
-      moving,
-    },
-  };
-  socket.send(JSON.stringify(payload));
+function applyTranslations() {
+  document.querySelectorAll<HTMLElement>("[data-i18n]").forEach((el) => {
+    const key = el.getAttribute("data-i18n")!;
+    el.textContent = t(key);
+  });
 }
-
 
 updateGameState({
   ballX: 480,
@@ -91,13 +83,16 @@ function getTokenFromCookie(): string | null {
   }
 }
 
-function showCustomAlert(message: string): Promise<void> {
+function showCustomAlert(
+  key: string,
+  vars: Record<string, string | number> = {},
+): Promise<void> {
   return new Promise((resolve) => {
     const modal = document.getElementById("custom-alert")!;
     const alertMsg = document.getElementById("alert-message")!;
     const okBtn = document.getElementById("alert-ok")!;
 
-    alertMsg.textContent = message;
+    alertMsg.textContent = t(key, vars);
     modal.classList.remove("hidden");
 
     const close = () => {
@@ -121,7 +116,10 @@ function showCustomAlert(message: string): Promise<void> {
   });
 }
 
-function showCustomPrompt(message: string): Promise<string | null> {
+function showCustomPrompt(
+  key: string,
+  vars: Record<string, string | number> = {},
+): Promise<string | null> {
   return new Promise((resolve) => {
     const modal = document.getElementById("custom-prompt")!;
     const input = document.getElementById("prompt-input") as HTMLInputElement;
@@ -129,7 +127,7 @@ function showCustomPrompt(message: string): Promise<string | null> {
     const okBtn = document.getElementById("prompt-ok")!;
     const cancelBtn = document.getElementById("prompt-cancel")!;
 
-    promptMsg.textContent = message;
+    promptMsg.textContent = t(key, vars);
     input.value = "";
     modal.classList.remove("hidden");
     input.focus();
@@ -143,12 +141,11 @@ function showCustomPrompt(message: string): Promise<string | null> {
     const onOk = () => {
       const trimmed = input.value.trim();
       if (trimmed === "") {
-        // Don't close — just alert
         showCustomAlert("Prompt cannot be empty!");
         return;
       }
       if (trimmed.length > 10) {
-        showCustomAlert("Username must be 10 characters or fewer.");
+        showCustomAlert("alert.username_length");
         return;
       }
       cleanup();
@@ -206,12 +203,37 @@ async function tournamentMatchmaking(players: Player[]): Promise<void> {
   while (players.length > 1) {
     console.log(`\n--- Round ${round} ---`);
     const nextRoundPlayers: Player[] = [];
+    const ul = document.getElementById("match-queue-list")!;
+    ul.innerHTML = "";
 
     players = players.sort(() => Math.random() - 0.5);
 
     const matchPairs: [Player, Player | null][] = [];
     for (let i = 0; i < players.length; i += 2) {
       matchPairs.push([players[i], players[i + 1] || null]);
+    }
+
+    for (const [p1, p2] of matchPairs) {
+      const li = document.createElement("li");
+      li.className =
+        "flex items-center justify-center w-40 truncate px-4 py-2 " +
+        "bg-red-900 bg-opacity-50 text-yellow-300 rounded " +
+        "hover:bg-opacity-75 transition";
+
+      const left = document.createElement("span");
+      left.textContent = p1.username;
+      left.className = "truncate flex-1 text-left";
+
+      const vs = document.createElement("span");
+      vs.textContent = "vs";
+      vs.className = "px-2";
+
+      const right = document.createElement("span");
+      right.textContent = p2?.username ?? "(bye)";
+      right.className = "truncate flex-1 text-right";
+
+      li.append(left, vs, right);
+      ul.appendChild(li);
     }
 
     for (const [player1, player2] of matchPairs) {
@@ -227,6 +249,15 @@ async function tournamentMatchmaking(players: Player[]): Promise<void> {
         matchupText.textContent = `${player1.username} vs ${player2.username}`;
       }
 
+      const p1Name = document.getElementById("player1-name");
+      const p2Name = document.getElementById("player2-name");
+
+      if (p1Name && p2Name) {
+        p1Name.textContent = player1.username;
+        tPlayer1 = player1.username;
+        p2Name.textContent = player2.username;
+        tPlayer2 = player2.username;
+      }
       const id = await newGame();
       if (id) {
         gameId = id;
@@ -245,19 +276,11 @@ async function tournamentMatchmaking(players: Player[]): Promise<void> {
         alert("Failed to start tournament");
       }
 
-      const p1Name = document.getElementById("player1-name");
-      const p2Name = document.getElementById("player2-name");
-
-      if (p1Name && p2Name) {
-        p1Name.textContent = player1.username;
-        tPlayer1 = player1.username;
-        p2Name.textContent = player2.username;
-        tPlayer2 = player2.username;
-      }
-
       const winner = await waitForWinnerName();
       twinner = winner;
       console.log(`Winner of match: ${winner}`);
+      closeSocket = true;
+      socket.close();
 
       nextRoundPlayers.push(winner === player1.username ? player1 : player2);
 
@@ -268,8 +291,9 @@ async function tournamentMatchmaking(players: Player[]): Promise<void> {
     round++;
   }
   winTournament(twinner);
-  //location.reload();
+  tournamentStarted = false;
   console.log(`\n🏆 Tournament Winner: ${twinner}`);
+  resetTournament();
 }
 
 async function promptTournamentPlayers(): Promise<void> {
@@ -279,9 +303,7 @@ async function promptTournamentPlayers(): Promise<void> {
   let playerCount: number = 0;
 
   do {
-    playerCountStr = await showCustomPrompt(
-      "Enter the number of players (at least 3, max 10):",
-    );
+    playerCountStr = await showCustomPrompt("prompt.enter_player_count");
     if (!playerCountStr) return;
     playerCount = parseInt(playerCountStr.trim());
   } while (isNaN(playerCount) || playerCount < 3 || playerCount > 10);
@@ -293,17 +315,19 @@ async function promptTournamentPlayers(): Promise<void> {
   for (let i = 1; i < playerCount; i++) {
     let username: string | null;
     while (true) {
-      username = await showCustomPrompt(`Enter username for Player ${i + 1}:`);
+      username = await showCustomPrompt("prompt.enter_player_username", {
+        player: i + 1,
+      });
       if (!username) {
-        await showCustomAlert("Username required");
+        await showCustomAlert("alert.username_required");
         resetTournament();
         return;
       }
       username = username.trim();
       if (username === "") {
-        await showCustomAlert("Username cannot be empty.");
+        await showCustomAlert("alert.username_required");
       } else if (usernames.has(username)) {
-        await showCustomAlert("Username already taken. Please choose another.");
+        await showCustomAlert("alert.username_taken");
       } else {
         usernames.add(username);
         players.push({ id: i + 1, username });
@@ -318,15 +342,21 @@ async function promptTournamentPlayers(): Promise<void> {
 
 function initWebSocket(gameId: string, token: string) {
   socket = new WebSocket(`/ws/game/${gameId}?token=${token}`);
+  const inGameMenu = document.getElementById("in-game-menu");
+  const gameMenu = document.getElementById("game-menu");
+  const leftPaddle2 = document.getElementById("leftPaddle2");
+  const rightPaddle2 = document.getElementById("rightPaddle2");
 
   socket.onopen = () => {
     console.log("WebSocket connected");
+    closeSocket = false;
   };
 
   socket.onmessage = (event) => {
     const data: SocketDataType = JSON.parse(event.data);
     if (data.type === "game_state") {
       const gameData: GameType = data.payload;
+      gameState = gameData;
       if (newpong === false) {
         updateGameState({
           ballX: gameData.ball.x,
@@ -351,6 +381,7 @@ function initWebSocket(gameId: string, token: string) {
         multiplayerGameStarted === false &&
         tournamentStarted === false
       ) {
+        closeSocket = true;
         socket.close();
       }
 
@@ -380,7 +411,6 @@ function initWebSocket(gameId: string, token: string) {
         gameData.players[0].player.score >= 3 ||
         gameData.players[1].player.score >= 3
       ) {
-        pauseGame(gameId);
         if (multiplayerGameStarted === true) {
           if (gameData.players[0].player.score >= 3) {
             winnerName = gameData.players[0].player.username;
@@ -419,31 +449,31 @@ function initWebSocket(gameId: string, token: string) {
           }
         } else if (tournamentStarted === true) {
           if (gameData.players[0].player.score >= 3) {
-            pauseGame(gameId);
             winnerName = tPlayer1;
+            closeSocket = true;
             socket.close();
             return;
           } else if (gameData.players[1].player.score >= 3) {
-            pauseGame(gameId);
             winnerName = tPlayer2;
+            closeSocket = true;
             socket.close();
             return;
           }
         } else {
           if (gameData.players[0].player.score >= 3) {
-            pauseGame(gameId);
             if (username != null) {
               winTournament(username);
             }
           } else if (gameData.players[1].player.score >= 3) {
-            pauseGame(gameId);
             if (username2 != null) {
               winTournament(username2);
             }
           }
         }
-        document.getElementById("player1-score")!.textContent = "0";
-        document.getElementById("player2-score")!.textContent = "0";
+        setTimeout(() => {
+          document.getElementById("player1-score")!.textContent = "0";
+          document.getElementById("player2-score")!.textContent = "0";
+        }, 5000);
       } else if (
         gameData.players[0].player.won === true ||
         gameData.players[1].player.won === true
@@ -453,14 +483,14 @@ function initWebSocket(gameId: string, token: string) {
           if (gameData.players[0].player.won === true) {
             winnerName = gameData.players[0].player.username;
             if (gameData.players[0].player.username === username) {
-              winTournament(username2 + " resigned you ");
+              winTournament(gameData.players[0].player.username + "");
             } else {
               lose();
             }
           } else if (gameData.players[1].player.won === true) {
             winnerName = gameData.players[1].player.username;
             if (gameData.players[1].player.username === username) {
-              winTournament(username2 + " resigned you ");
+              winTournament(gameData.players[1].player.username + "");
             } else {
               lose();
             }
@@ -471,7 +501,12 @@ function initWebSocket(gameId: string, token: string) {
               gameData.players[0].player.username === username ||
               gameData.players[2].player.username === username
             ) {
-              winTournament(username2 + " resigned you ");
+              winTournament(
+                gameData.players[0].player.username +
+                  " & " +
+                  gameData.players[2].player.username +
+                  "",
+              );
             } else {
               lose();
             }
@@ -480,23 +515,88 @@ function initWebSocket(gameId: string, token: string) {
               gameData.players[1].player.username === username ||
               gameData.players[3].player.username === username
             ) {
-              winTournament(username2 + " resigned you ");
+              winTournament(
+                gameData.players[1].player.username +
+                  " & " +
+                  gameData.players[3].player.username +
+                  "",
+              );
             } else {
               lose();
             }
           }
         }
-        document.getElementById("player1-score")!.textContent = "0";
-        document.getElementById("player2-score")!.textContent = "0";
+        setTimeout(() => {
+          document.getElementById("player1-score")!.textContent = "0";
+          document.getElementById("player2-score")!.textContent = "0";
+        }, 5000);
       }
     }
   };
 
   socket.onclose = () => {
-    console.log("WebSocket disconnected");
+    if (closeSocket === false) {
+      if (history.state === "game") {
+        history.replaceState({ page: "menu" }, "", "/");
+      }
+      updateGameState({
+        ballX: 480,
+        ballY: 200,
+        leftPaddleY: 200,
+        rightPaddleY: 200,
+      });
+
+      if (tournamentStarted === true) {
+        resetTournament();
+      }
+      if (aiControllingPaddle === true) {
+        stopAI();
+      }
+      leftPaddle2?.classList.add("hidden");
+      rightPaddle2?.classList.add("hidden");
+      username2 = null;
+      username3 = null;
+      username3 = null;
+      newpong = false;
+      gameStarted = false;
+      tournamentStarted = false;
+      aiControllingPaddle = false;
+      multiplayerGameStarted = false;
+      inGameMenu?.classList.add("hidden");
+      gameMenu?.classList.remove("hidden");
+      console.log("WebSocket disconnected");
+    }
+    leftPaddle2?.classList.add("hidden");
+    rightPaddle2?.classList.add("hidden");
   };
 
   socket.onerror = (err) => {
+    if (history.state === "game") {
+      history.replaceState({ page: "menu" }, "", "/");
+    }
+    updateGameState({
+      ballX: 480,
+      ballY: 200,
+      leftPaddleY: 200,
+      rightPaddleY: 200,
+    });
+
+    if (tournamentStarted === true) {
+      resetTournament();
+    }
+    if (aiControllingPaddle === true) {
+      stopAI();
+    }
+    username2 = null;
+    username3 = null;
+    username3 = null;
+    newpong = false;
+    gameStarted = false;
+    tournamentStarted = false;
+    aiControllingPaddle = false;
+    multiplayerGameStarted = false;
+    inGameMenu?.classList.add("hidden");
+    gameMenu?.classList.remove("hidden");
     console.error("WebSocket error", err);
   };
 }
@@ -556,27 +656,34 @@ async function resumeGame(gameId: string) {
 async function win() {
   const winBtn = document.getElementById("win-message");
   const gameMenu = document.getElementById("game-menu");
+  const leftPaddle2 = document.getElementById("leftPaddle2");
+  const rightPaddle2 = document.getElementById("rightPaddle2");
 
   winBtn?.classList.remove("hidden");
+  closeSocket = true;
   socket.close();
   history.replaceState({ page: "menu" }, "", "/");
 
   setTimeout(() => {
     winBtn?.classList.add("hidden");
     gameMenu?.classList.remove("hidden");
-    // if (tournamentStarted === false) {
-    //   location.reload();
-    // }
-  }, 10000);
+  }, 5000);
   updateGameState({
     ballX: 480,
     ballY: 200,
     leftPaddleY: 200,
     rightPaddleY: 200,
   });
+  if (aiControllingPaddle === true) {
+    stopAI();
+  }
+  if (newpong === true) {
+    leftPaddle2?.classList.add("hidden");
+    rightPaddle2?.classList.add("hidden");
+  }
   newpong = false;
   gameStarted = false;
-  //tournamentStarted = false;
+  aiControllingPaddle = false;
   multiplayerGameStarted = false;
 }
 
@@ -585,33 +692,38 @@ async function winTournament(wusername: string) {
   const gameMenu = document.getElementById("game-menu");
 
   if (!winMsg) return;
-  winMsg.textContent = `${wusername} won`;
+  winMsg.textContent = `👑 ${wusername} 👑`;
   winMsg?.classList.remove("hidden");
+  closeSocket = true;
   socket.close();
   history.replaceState({ page: "menu" }, "", "/");
   setTimeout(() => {
     winMsg?.classList.add("hidden");
     gameMenu?.classList.remove("hidden");
-    //if (tournamentStarted === false) {
-    //location.reload();
-    //}
-  }, 10000);
+  }, 5000);
   updateGameState({
     ballX: 480,
     ballY: 200,
     leftPaddleY: 200,
     rightPaddleY: 200,
   });
+  if (aiControllingPaddle === true) {
+    stopAI();
+  }
   newpong = false;
   gameStarted = false;
-  //tournamentStarted = false;
+  tournamentStarted = false;
+  aiControllingPaddle = false;
   multiplayerGameStarted = false;
 }
 
 async function lose() {
   const loseBtn = document.getElementById("lose-message");
   const gameMenu = document.getElementById("game-menu");
+  const leftPaddle2 = document.getElementById("leftPaddle2");
+  const rightPaddle2 = document.getElementById("rightPaddle2");
 
+  closeSocket = true;
   socket.close();
   history.replaceState({ page: "menu" }, "", "/");
 
@@ -619,19 +731,23 @@ async function lose() {
   setTimeout(() => {
     loseBtn?.classList.add("hidden");
     gameMenu?.classList.remove("hidden");
-    // if (tournamentStarted === false) {
-    //   location.reload();
-    // }
-  }, 10000);
+  }, 5000);
   updateGameState({
     ballX: 480,
     ballY: 200,
     leftPaddleY: 200,
     rightPaddleY: 200,
   });
+  if (aiControllingPaddle === true) {
+    stopAI();
+  }
+  if (newpong === true) {
+    leftPaddle2?.classList.add("hidden");
+    rightPaddle2?.classList.add("hidden");
+  }
   newpong = false;
   gameStarted = false;
-  tournamentStarted = false;
+  aiControllingPaddle = false;
   multiplayerGameStarted = false;
 }
 
@@ -757,7 +873,7 @@ async function joinMultiplayerGame(): Promise<string | null> {
     if (gameState.players[0].player.username === username2) {
       return gameId;
     } else {
-      await showCustomAlert("bad username2");
+      await showCustomAlert("alert.bad_username2");
       return null;
     }
   } catch (err) {
@@ -800,7 +916,6 @@ async function multiplayerGame(): Promise<string | null> {
 async function newpongGame(): Promise<string | null> {
   try {
     if (!username2 || !username3 || !username4) {
-      showCustomAlert("porcodio");
       return null;
     }
     const body: PostGameType = { opponents: [username2, username3, username4] };
@@ -837,8 +952,8 @@ function goToGame() {
 history.pushState({ page: "menu" }, "", location.pathname);
 
 document.addEventListener("DOMContentLoaded", () => {
+  applyTranslations();
   const toggleButton = document.getElementById("menuToggle");
-
   const gameMenu = document.getElementById("game-menu");
   const startButton = document.getElementById("start-game-btn");
   const tournamentButton = document.getElementById("start-tournament-btn");
@@ -868,7 +983,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const rightPaddle2 = document.getElementById("rightPaddle2");
 
   window.addEventListener("popstate", (event) => {
-    //console.log("POPSTATE", event.state, "CURRENT STATE", history.state);
     const state = event.state;
 
     if (
@@ -882,7 +996,14 @@ document.addEventListener("DOMContentLoaded", () => {
       if (tournamentStarted === true) {
         resetTournament();
       }
-      //lose();
+      if (aiControllingPaddle === true) {
+        stopAI();
+      }
+      if (newpong === true) {
+        leftPaddle2?.classList.add("hidden");
+        rightPaddle2?.classList.add("hidden");
+      }
+      closeSocket = true;
       socket.close();
       history.replaceState({ page: "menu" }, "", "/");
 
@@ -897,10 +1018,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   startButton?.addEventListener("click", async () => {
     if (username) {
-      username2 = await showCustomPrompt("Enter friend username:");
+      username2 = await showCustomPrompt("prompt.enter_friend_username1v1");
       if (!username2) {
-        //await showCustomAlert("Friend username can't be empty");
         return;
+      }
+      if (username2 === "ai") {
+        aiControllingPaddle = true;
+        stopAI();
+        startAI();
       }
       const id = await newGame();
       if (id) {
@@ -916,16 +1041,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 1000);
         resumeGame(gameId);
       } else {
-        await showCustomAlert("Failed to start game");
+        await showCustomAlert("alert.failed_start_game");
       }
       setupPlayerControls();
-      if (username2 === "ai") {
-        startAI(1);
-      }
-      //history.replaceState({ page: "game", gameId }, "", `?game=${gameId}`);
       goToGame();
     } else {
-      await showCustomAlert("Failed to start game, you need to login");
+      await showCustomAlert("alert.failed_login");
     }
   });
 
@@ -935,18 +1056,18 @@ document.addEventListener("DOMContentLoaded", () => {
       history.pushState({ page: "game", gameId }, "", `?game=${gameId}`);
       promptTournamentPlayers();
     } else {
-      await showCustomAlert("Failed to start game, you need to login");
+      await showCustomAlert("alert.failed_login");
     }
   });
 
   newpongButton?.addEventListener("click", async () => {
     if (token) {
-      username2 = await showCustomPrompt("Enter friend username2:");
+      username2 = await showCustomPrompt("prompt.enter_friend_username2");
       if (!username2 || username2 === username) return;
-      username3 = await showCustomPrompt("Enter friend username3:");
+      username3 = await showCustomPrompt("prompt.enter_friend_username3");
       if (!username3 || username3 === username || username3 === username2)
         return;
-      username4 = await showCustomPrompt("Enter friend username4:");
+      username4 = await showCustomPrompt("prompt.enter_friend_username4");
       if (
         !username4 ||
         username4 === username ||
@@ -969,14 +1090,10 @@ document.addEventListener("DOMContentLoaded", () => {
           createBtn?.classList.add("hidden");
         }, 1000);
       } else {
-        await showCustomAlert(
-          "Failed to start multiplayer game, friend username empty",
-        );
+        await showCustomAlert("alert.failed_newpong");
       }
     } else {
-      await showCustomAlert(
-        "Failed to start multiplayer game, you need to be logged in",
-      );
+      await showCustomAlert("alert.failed_create_game");
     }
     setupPlayerControls();
     goToGame();
@@ -984,10 +1101,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   joinNewpongButton?.addEventListener("click", async () => {
     if (token) {
-      username2 = await showCustomPrompt("Enter creator username:");
+      username2 = await showCustomPrompt("prompt.enter_friend_username");
       if (!username2) return;
       const id = await joinMultiplayerGame();
-      if (id) {
+      if (id && gameState.players.length === 4) {
         gameId = id;
         newpong = true;
         initWebSocket(gameId, token);
@@ -1001,12 +1118,10 @@ document.addEventListener("DOMContentLoaded", () => {
           joinBtn?.classList.add("hidden");
         }, 1000);
       } else {
-        await showCustomAlert("Failed to join multiplayer game");
+        await showCustomAlert("alert.failed_join_multiplayer");
       }
     } else {
-      await showCustomAlert(
-        "Failed to join multiplayer game, you need to be logged in",
-      );
+      await showCustomAlert("alert.failed_join_login");
     }
     setupPlayerControls();
     goToGame();
@@ -1014,7 +1129,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   multiplayerButton?.addEventListener("click", async () => {
     if (token) {
-      username2 = await showCustomPrompt("Enter friend username:");
+      username2 = await showCustomPrompt("prompt.enter_friend_username");
       if (!username2) return;
       const id = await multiplayerGame();
       if (id) {
@@ -1029,14 +1144,10 @@ document.addEventListener("DOMContentLoaded", () => {
           createBtn?.classList.add("hidden");
         }, 1000);
       } else {
-        await showCustomAlert(
-          "Failed to start multiplayer game, friend username empty",
-        );
+        await showCustomAlert("alert.failed_newpong");
       }
     } else {
-      await showCustomAlert(
-        "Failed to start multiplayer game, you need to be logged in",
-      );
+      await showCustomAlert("alert.failed_create_game");
     }
     setupPlayerControls();
     goToGame();
@@ -1044,10 +1155,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   joinMultiplayerButton?.addEventListener("click", async () => {
     if (token) {
-      username2 = await showCustomPrompt("Enter creator username:");
+      username2 = await showCustomPrompt("prompt.enter_friend_username");
       if (!username2) return;
       const id = await joinMultiplayerGame();
-      if (id) {
+      if (id && gameState.players.length === 2) {
         gameId = id;
         multiplayerGameStarted = true;
         initWebSocket(gameId, token);
@@ -1060,19 +1171,18 @@ document.addEventListener("DOMContentLoaded", () => {
           joinBtn?.classList.add("hidden");
         }, 1000);
       } else {
-        await showCustomAlert("Failed to join multiplayer game");
+        await showCustomAlert("alert.failed_join_multiplayer");
       }
     } else {
-      await showCustomAlert("Failed to start game, you need to login");
+      await showCustomAlert("alert.failed_join_multiplayer");
     }
     setupPlayerControls();
     goToGame();
   });
 
   loginBtn?.addEventListener("click", async () => {
-    username = await showCustomPrompt("Enter your username:");
+    username = await showCustomPrompt("prompt.enter_username");
     if (!username) {
-      await showCustomAlert("Username is required.");
       return;
     } else {
       if (username) {
@@ -1089,13 +1199,13 @@ document.addEventListener("DOMContentLoaded", () => {
       signOutBtn?.classList.remove("hidden");
       console.log("Logged in with token:", token);
     } else {
-      await showCustomAlert("Login failed.");
+      await showCustomAlert("alert.failed_login");
     }
   });
 
   exitButton?.addEventListener("click", () => {
+    closeSocket = true;
     socket.close();
-    // lose();
     history.replaceState({ page: "menu" }, "", "/");
     updateGameState({
       ballX: 480,
@@ -1107,10 +1217,20 @@ document.addEventListener("DOMContentLoaded", () => {
     if (tournamentStarted === true) {
       resetTournament();
     }
-
+    if (aiControllingPaddle === true) {
+      stopAI();
+    }
+    if (newpong === true) {
+      leftPaddle2?.classList.add("hidden");
+      rightPaddle2?.classList.add("hidden");
+    }
+    username2 = null;
+    username3 = null;
+    username3 = null;
     newpong = false;
     gameStarted = false;
     tournamentStarted = false;
+    aiControllingPaddle = false;
     multiplayerGameStarted = false;
     inGameMenu?.classList.add("hidden");
     gameMenu?.classList.remove("hidden");
@@ -1238,25 +1358,44 @@ function updateGameState2({
 let moving: boolean;
 
 export function sendMove(key: string, moving: boolean) {
-  let paddle: number;
+  let paddle: number | undefined;
   let direction: PaddleDirectionType;
+
   if (!socket || socket.readyState !== WebSocket.OPEN) return;
   if (multiplayerGameStarted === true || newpong === true) {
-    if (gameState.players[0].player.username === username) {
-      paddle = 0;
-    } else if (gameState.players[1].player.username === username) {
-      paddle = 1;
-    } else if (gameState.players[2].player.username === username) {
-      paddle = 2;
-    } else if (gameState.players[3].player.username === username) {
-      paddle = 3;
-    } else {
-      return;
+    for (let i = 0; i < 4; i++) {
+      if (gameState.players[i]?.player.username === username) {
+        paddle = i;
+        break;
+      }
     }
+    if (paddle === undefined) return;
 
     if (key === "w" || key === "ArrowUp") {
       direction = "up";
     } else if (key === "s" || key === "ArrowDown") {
+      direction = "down";
+    } else {
+      return;
+    }
+  } else if (aiControllingPaddle === true) {
+    if (key === "w") {
+      paddle = 0;
+      direction = "up";
+    } else if (key === "s") {
+      paddle = 0;
+      direction = "down";
+    } else if (key === "ArrowUp") {
+      paddle = 0;
+      direction = "up";
+    } else if (key === "ArrowDown") {
+      paddle = 0;
+      direction = "down";
+    } else if (key === "🤖") {
+      paddle = 1;
+      direction = "up";
+    } else if (key === "🦿") {
+      paddle = 1;
       direction = "down";
     } else {
       return;
@@ -1299,4 +1438,61 @@ export function setupPlayerControls() {
     moving = false;
     sendMove(e.key, moving);
   });
+}
+
+import { setLanguage, getCurrentLanguage } from "./i18n";
+
+const supportedLanguages = ["en", "fr", "it", "nl", "pirate"];
+const flags: Record<string, string> = {
+  en: "🇬🇧",
+  fr: "🇫🇷",
+  it: "🇮🇹",
+  nl: "🇳🇱",
+  pirate: "🏴‍☠️",
+};
+
+const languageButton = document.getElementById(
+  "languageToggle",
+) as HTMLButtonElement;
+const languageList = document.getElementById("languageList") as HTMLDivElement;
+
+let currentLanguage = getCurrentLanguage();
+updateButtonLabel(currentLanguage);
+
+supportedLanguages.forEach((lang) => {
+  const item = document.createElement("button");
+  item.className = "p-2 text-yellow-300 hover:bg-gray-200 w-full text-left";
+  item.textContent = `${flags[lang]} ${lang.toUpperCase()}`;
+  item.addEventListener("click", () => {
+    currentLanguage = lang;
+    updateButtonLabel(currentLanguage);
+    setLanguage(currentLanguage);
+    toggleDropdown(false);
+  });
+  languageList.appendChild(item);
+});
+
+languageButton.addEventListener("click", (e) => {
+  e.stopPropagation();
+  toggleDropdown();
+});
+
+document.addEventListener("click", () => {
+  toggleDropdown(false);
+});
+
+function updateButtonLabel(lang: string) {
+  languageButton.textContent = `${flags[lang]} ${lang.toUpperCase()} ▼`;
+}
+
+function toggleDropdown(show?: boolean) {
+  const isVisible = !languageList.classList.contains("hidden");
+  const shouldShow = show !== undefined ? show : !isVisible;
+
+  if (shouldShow) {
+    languageList.style.width = `${languageButton.offsetWidth}px`;
+    languageList.classList.remove("hidden");
+  } else {
+    languageList.classList.add("hidden");
+  }
 }

@@ -10,21 +10,19 @@ import (
 )
 
 func drawGameStateTcell(screen tcell.Screen, game *api.GameState) {
-	// Terminal grid dimensions
+
 	width := TermWidth
 	height := TermHeight
 
 	innerWidth := width - 2
 	innerHeight := height - 2
 
-	// Colors and styles
 	borderStyle := tcell.StyleDefault.Foreground(tcell.ColorWhite)
 	paddleStyle := tcell.StyleDefault.Foreground(tcell.ColorGreen)
 	ballStyle := tcell.StyleDefault.Foreground(tcell.ColorYellow)
 	centerLineStyle := tcell.StyleDefault.Foreground(tcell.ColorGray)
 	scoreStyle := tcell.StyleDefault.Foreground(tcell.ColorWhite)
 
-	// Draw borders
 	for x := 0; x < width; x++ {
 		screen.SetContent(x, 0, '─', nil, borderStyle)
 		screen.SetContent(x, height-1, '─', nil, borderStyle)
@@ -38,13 +36,11 @@ func drawGameStateTcell(screen tcell.Screen, game *api.GameState) {
 		screen.SetContent(width-1, y, '│', nil, borderStyle)
 	}
 
-	// Draw center line
 	centerX := innerWidth/2 + 1
 	for y := 1; y < height-1; y++ {
 		screen.SetContent(centerX, y, '│', nil, centerLineStyle)
 	}
 
-	// Helper to scale game coordinates to terminal
 	scaleX := func(x int) int {
 		return int(float64(x) * float64(innerWidth) / float64(GameWidth))
 	}
@@ -52,14 +48,12 @@ func drawGameStateTcell(screen tcell.Screen, game *api.GameState) {
 		return int(float64(y) * float64(innerHeight) / float64(GameHeight))
 	}
 
-	// Draw player info line
 	topLine := fmt.Sprintf("%s─%d─────────%d─%s", Truncate(game.Players[0].Player.Username, 10), game.Players[0].Player.Score, game.Players[1].Player.Score, Truncate(game.Players[1].Player.Username, 10))
 	startX := (innerWidth-len(topLine))/2 + 1
 	for i, r := range topLine {
 		screen.SetContent(startX+i, 0, r, nil, scoreStyle)
 	}
 
-	// Draw paddles
 	paddleHeight := (PaddleHeight * innerHeight) / GameHeight
 	if paddleHeight < 1 {
 		paddleHeight = 1
@@ -92,7 +86,6 @@ func drawGameStateTcell(screen tcell.Screen, game *api.GameState) {
 		}
 	}
 
-	// Draw ball
 	ballX := scaleX(int(game.Ball.X)) + 1
 	ballY := scaleY(int(game.Ball.Y)) + 1
 	if ballX > 0 && ballX < width-1 && ballY > 0 && ballY < height-1 {
@@ -134,7 +127,6 @@ func drawEndOverlay(screen tcell.Screen, winner string, youWon bool) {
 	for i, r := range msg {
 		screen.SetContent(x+i, y, r, nil, style)
 	}
-	// Optional: show who won
 	winnerMsg := fmt.Sprintf("Winner: %s", winner)
 	wx := (TermWidth - len(winnerMsg)) / 2
 	wy := y + 2
@@ -146,7 +138,6 @@ func drawEndOverlay(screen tcell.Screen, winner string, youWon bool) {
 func drawEndPage(screen tcell.Screen, endTime time.Time, reason string) {
 	screen.Clear()
 
-	// Main message (reason: "GAME ENDED" or "CONNECTION LOST")
 	msg := " " + reason + " "
 	msgStyle := tcell.StyleDefault.Foreground(tcell.ColorRed).Bold(true)
 	x := (TermWidth - len(msg)) / 2
@@ -155,7 +146,6 @@ func drawEndPage(screen tcell.Screen, endTime time.Time, reason string) {
 		screen.SetContent(x+i, y, r, nil, msgStyle)
 	}
 
-	// Sub message: prompt to exit
 	subMsg := "Press two key to exit,\n First to create a PollEvent()\n Ans Second to trigger EventKey"
 	subStyle := tcell.StyleDefault.Foreground(tcell.ColorWhite)
 
@@ -164,7 +154,6 @@ func drawEndPage(screen tcell.Screen, endTime time.Time, reason string) {
 	startY := y + 2
 
 	for row, line := range lines {
-		// center each line individually
 		sx := (TermWidth - len(line)) / 2
 		sy := startY + row
 
@@ -176,19 +165,12 @@ func drawEndPage(screen tcell.Screen, endTime time.Time, reason string) {
 	screen.Show()
 
 	for {
-		// check for timeout
-		if time.Since(endTime) > 3*time.Second {
-			break
-		}
-		// non-blocking poll: see if the user pressed anything
 		switch screen.PollEvent().(type) {
 		case *tcell.EventKey:
-			return // exit on any key
-		case *tcell.EventResize:
-			screen.Sync() // handle resize
+			return
 		default:
 			// small sleep to avoid busy-looping
-			time.Sleep(20 * time.Millisecond)
+			time.Sleep(50 * time.Millisecond)
 		}
 	}
 }
@@ -226,7 +208,6 @@ func drawWinPage(screen tcell.Screen, endTime time.Time, winstate bool, winner s
 	startY := y + 4
 
 	for row, line := range lines {
-		// center each line individually
 		sx := (TermWidth - len(line)) / 2
 		sy := startY + row
 
@@ -238,15 +219,12 @@ func drawWinPage(screen tcell.Screen, endTime time.Time, winstate bool, winner s
 	screen.Show()
 
 	for {
-		if time.Since(endTime) > 3*time.Second {
-			break
-		}
 		switch screen.PollEvent().(type) {
-		case *tcell.EventResize:
-			screen.Sync() // handle resize
+		case *tcell.EventKey:
+			return
 		default:
-			time.Sleep(20 * time.Millisecond)
+			// small sleep to avoid busy-looping
+			time.Sleep(50 * time.Millisecond)
 		}
 	}
-	return
 }

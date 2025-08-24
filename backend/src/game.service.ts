@@ -20,14 +20,21 @@ class GameService {
   private games = new Map<IdType, GameServiceGame>();
 
   constructor() {
-    // Start the game loop when the service is instantiated
     setInterval(() => this.updateGames(), 16);
   }
 
   createGame(players: string[]): GameType {
     const id: IdType = uuidv4();
     const gamePlayers: GamePlayerType[] = [];
+    let i: number = 0;
     for (const player of players) {
+      const paddleY: number[] =
+        players.length > 2
+          ? [
+              PONG.map.ySize / 4 - PONG.paddle.ySize / 2,
+              PONG.map.ySize * (3 / 4) - PONG.paddle.ySize / 2,
+            ]
+          : [PONG.map.ySize / 2 - PONG.paddle.ySize / 2];
       gamePlayers.push({
         player: {
           username: player,
@@ -35,11 +42,12 @@ class GameService {
           won: false,
         },
         paddle: {
-          y: PONG.map.ySize / 2 - PONG.paddle.ySize / 2,
+          y: paddleY[i < 2 ? 0 : 1],
           direction: "up",
           moving: false,
         },
       });
+      ++i;
     }
     const game: GameServiceGame = {
       id,
@@ -105,6 +113,9 @@ class GameService {
         paddleRef.moving = moving;
       }
     });
+    if (game.sockets.size === game.players.length) {
+      game.paused = false;
+    }
   }
 
   broadcast(gameId: IdType) {

@@ -1,0 +1,73 @@
+{
+  "meta": {
+    "title": "Pongspel"
+  },
+  "profile": {
+    "username": "Gebruikersnaam"
+  },
+  "app": {
+    "name": "Pong",
+    "subtitle": "PONGSPEL"
+  },
+  "message": {
+    "started_game": "Spel gestart",
+    "created_game": "Spel aangemaakt",
+    "joined_game": "Aan spel deelgenomen",
+    "you_won": "Je hebt gewonnen",
+    "username_won": "👑 {{username}} 👑",
+    "you_lost": "Je hebt verloren"
+  },
+  "menu": {
+    "welcome_title": "Welkom bij Pong",
+    "welcome_subtitle": "Kies je modus en druk op Start",
+    "mode_1v1": "Start spel",
+    "start_tournament": "Toernooi starten",
+    "mode_1v1_multiplayer": "Multiplayer",
+    "join_1v1_multiplayer": "Doe mee aan multiplayer",
+    "mode_2v2": "Start 2v2-spel",
+    "join_2v2": "Doe mee aan 2v2-spel",
+    "login": "Inloggen",
+    "sign_out": "Uitloggen"
+  },
+  "in_game": {
+    "menu_title": "Spelmenu",
+    "menu_subtitle": "Kies je modus en druk op Start",
+    "resume": "Spel hervatten",
+    "exit": "Spel afsluiten"
+  },
+  "tournament": {
+    "ready_title": "Klaar voor toernooi",
+    "matchup_text": "{{player1}} vs {{player2}}",
+    "start_round": "Start ronde",
+    "upcoming_matches": "Aankomende wedstrijden",
+    "gameReady": "Spel klaar"
+  },
+  "prompt": {
+    "enter_username": "Voer je gebruikersnaam in",
+    "enter_friend_username1v1": "Voer de gebruikersnaam van een vriend in: (of <ai> om tegen een bot te spelen)",
+    "enter_friend_username": "Voer de gebruikersnaam van je vriend in:",
+    "enter_friend_username2": "Voer de gebruikersnaam van je vriend 2 in:",
+    "enter_friend_username3": "Voer de gebruikersnaam van je vriend 3 in:",
+    "enter_friend_username4": "Voer de gebruikersnaam van je vriend 4 in:",
+    "enter_player_count": "Voer het aantal spelers in (minstens 3):",
+    "enter_player_username": "Voer de gebruikersnaam in voor speler {{player}}:",
+    "cancel": "Annuleren",
+    "ok": "OK",
+    "friend_username_empty": "Gebruikersnaam van vriend mag niet leeg zijn"
+  },
+  "alert": {
+    "message": "Waarschuwing",
+    "ok": "OK",
+    "failed_start_game": "Spel starten mislukt",
+    "failed_login": "Spel starten mislukt, je moet inloggen",
+    "failed_newpong": "Multiplayer starten mislukt, geen vriendnaam opgegeven",
+    "failed_create_game": "Maken multiplayer-spel mislukt, je moet ingelogd zijn",
+    "failed_join_multiplayer": "Meedoen aan multiplayer mislukt",
+    "failed_join_login": "Meedoen aan multiplayer mislukt, je moet inloggen",
+    "username_required": "Gebruikersnaam is verplicht.",
+    "username_length": "Gebruikersnaam mag maximaal 10 tekens lang zijn.",
+    "login_failed": "Inloggen mislukt.",
+    "bad_username2": "Ongeldige gebruikersnaam",
+    "failed_start_tournament": "Toernooi starten mislukt"
+  }
+}

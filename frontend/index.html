@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ft_transcendence</title>
-    <link rel="stylesheet" href="style.css" />
+    <title data-i18n="meta.title"></title>
+
     <script type="module" src="/src/main.ts"></script>
   </head>
   <body
@@ -32,65 +32,77 @@
       </svg>
     </button>
 
-    <div class="absolute top-4 right-4 flex items-center space-x-2 z-50">
+    <!-- Profile & Language Switcher -->
+    <div class="absolute top-4 right-4 flex items-center space-x-4 z-50">
+      <!-- Language Toggle -->
+      <div class="relative">
+        <button
+          id="languageToggle"
+          class="p-2 bg-red-700 text-yellow-300 rounded shadow hover:bg-gray-200 transition"
+          aria-label="Select language"
+        >
+          🇬🇧 EN ▼
+        </button>
+        <div
+          id="languageList"
+          class="hidden absolute mt-2 right-0 bg-red-700 rounded shadow-lg overflow-hidden"
+        >
+          <!-- Populated dynamically by main.ts -->
+        </div>
+      </div>
+
       <!-- Profile Icon -->
       <div
         class="w-10 h-10 bg-yellow-300 rounded-full flex items-center justify-center text-black font-bold"
       >
-        <!-- Optional: First letter of username -->
-        <span id="profile-initial">U</span>
+        <span id="profile-initial"></span>
       </div>
-      <!-- Username -->
-      <span id="profile-username" class="text-white font-semibold"
-        >Username</span
-      >
+      <span id="profile-username" class="text-white font-semibold"></span>
     </div>
 
     <!-- Centered Main Content -->
     <main
       class="flex flex-col items-center justify-center text-center min-h-screen px-4"
     >
-      <h1 class="text-4xl font-bold text-yellow-300 mb-4">ft_transcendence</h1>
-      <h2 class="text-5xl font-extrabold text-yellow-300 mb-12">
-        THE PONG GAME
-      </h2>
+      <h1
+        class="text-4xl font-bold text-yellow-300 mb-4"
+        data-i18n="app.name"
+      ></h1>
+      <h2
+        class="text-5xl font-extrabold text-yellow-300 mb-12"
+        data-i18n="app.subtitle"
+      ></h2>
       <!-- Game Menu Overlay -->
       <div
         id="start-message"
         class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-transparent text-white text-3xl px-4 py-2 rounded shadow-md transition-opacity duration-500 z-40"
-      >
-        started game
-      </div>
+        data-i18n="message.started_game"
+      ></div>
       <div
         id="create-message"
         class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-transparent text-white text-3xl px-4 py-2 rounded shadow-md transition-opacity duration-500 z-40"
-      >
-        created game
-      </div>
+        data-i18n="message.created_game"
+      ></div>
       <div
         id="join-message"
         class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-transparent text-white text-3xl px-4 py-2 rounded shadow-md transition-opacity duration-500 z-40"
-      >
-        Joined game
-      </div>
+        data-i18n="message.joined_game"
+      ></div>
       <div
         id="win-message"
         class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-transparent text-white text-3xl px-4 py-2 rounded shadow-md transition-opacity duration-500 z-40"
-      >
-        you won
-      </div>
+        data-i18n="message.you_won"
+      ></div>
       <div
         id="tournament-win-message"
         class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-transparent text-white text-3xl px-4 py-2 rounded shadow-md transition-opacity duration-500 z-40"
-      >
-        username won
-      </div>
+        data-i18n="message.username_won"
+      ></div>
       <div
         id="lose-message"
         class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-transparent text-white text-3xl px-4 py-2 rounded shadow-md transition-opacity duration-500 z-40"
-      >
-        you lost
-      </div>
+        data-i18n="message.you_lost"
+      ></div>
       <div
         id="game-menu"
         class="fixed inset-0 bg-transparent flex items-center justify-center z-40"
@@ -98,66 +110,62 @@
         <div
           class="bg-red-800 bg-opacity-80 p-10 rounded-lg shadow-2xl w-[640px] h-[420px] flex flex-col items-center justify-center space-y-6"
         >
-          <h2 class="text-4xl font-bold text-yellow-300">Welcome to Pong</h2>
-          <p class="text-lg text-yellow-300">
-            Choose your mode and press start
-          </p>
+          <h2
+            class="text-4xl font-bold text-yellow-300"
+            data-i18n="menu.welcome_title"
+          ></h2>
+          <p
+            class="text-lg text-yellow-300"
+            data-i18n="menu.welcome_subtitle"
+          ></p>
           <div class="flex space-x-4">
             <button
               id="start-game-btn"
               class="bg-red-900 text-yellow-300 px-6 py-2 rounded hover:bg-red-900 transition"
-            >
-              1 VS 1
-            </button>
+              data-i18n="menu.mode_1v1"
+            ></button>
             <button
               id="start-tournament-btn"
               class="bg-red-900 text-yellow-300 px-6 py-2 rounded hover:bg-red-900 transition"
-            >
-              Start tournament
-            </button>
+              data-i18n="menu.start_tournament"
+            ></button>
           </div>
           <div class="flex space-x-4">
             <button
               id="multiplayer-game-btn"
               class="bg-red-900 text-yellow-300 px-6 py-2 rounded hover:bg-red-900 transition"
-            >
-              1 VS 1 Multiplayer
-            </button>
+              data-i18n="menu.mode_1v1_multiplayer"
+            ></button>
             <button
               id="join-multiplayer-game-btn"
               class="bg-red-900 text-yellow-300 px-6 py-2 rounded hover:bg-red-900 transition"
-            >
-              join 1 VS 1 Multiplayer
-            </button>
+              data-i18n="menu.join_1v1_multiplayer"
+            ></button>
           </div>
           <div class="flex space-x-4">
             <button
               id="newpong-game-btn"
               class="bg-red-900 text-yellow-300 px-6 py-2 rounded hover:bg-red-900 transition"
-            >
-              2 VS 2
-            </button>
+              data-i18n="menu.mode_2v2"
+            ></button>
             <button
               id="join-newpong-game-btn"
               class="bg-red-900 text-yellow-300 px-6 py-2 rounded hover:bg-red-900 transition"
-            >
-              Join 2 vs 2
-            </button>
+              data-i18n="menu.join_2v2"
+            ></button>
           </div>
           <div class="flex space-x-4">
             <button
               id="show-login"
               class="bg-blue-600 text-white px-4 py-2 rounded"
-            >
-              Login
-            </button>
+              data-i18n="menu.login"
+            ></button>
           </div>
           <button
             id="show-signout"
             class="text-white font-semibold px-4 py-2 rounded hover:underline"
-          >
-            Sign Out
-          </button>
+            data-i18n="menu.sign_out"
+          ></button>
         </div>
       </div>
       <div
@@ -167,22 +175,24 @@
         <div
           class="bg-red-800 bg-opacity-80 p-10 rounded-lg shadow-2xl w-[640px] h-[320px] flex flex-col items-center justify-center space-y-6"
         >
-          <h2 class="text-4xl font-bold text-yellow-300">Game Menu</h2>
-          <p class="text-lg text-yellow-300">
-            Choose your mode and press start
-          </p>
+          <h2
+            class="text-4xl font-bold text-yellow-300"
+            data-i18n="in_game.menu_title"
+          ></h2>
+          <p
+            class="text-lg text-yellow-300"
+            data-i18n="in_game.menu_subtitle"
+          ></p>
           <button
             id="resume-game-btn"
             class="bg-red-900 text-yellow-300 px-6 py-2 rounded hover:bg-red-900 transition"
-          >
-            Resume Game
-          </button>
+            data-i18n="in_game.resume"
+          ></button>
           <button
             id="exit-game-btn"
             class="bg-red-900 text-yellow-300 px-6 py-2 rounded hover:bg-red-900 transition"
-          >
-            Exit Game
-          </button>
+            data-i18n="in_game.exit"
+          ></button>
         </div>
       </div>
       <div
@@ -192,21 +202,23 @@
         <div
           class="bg-red-800 bg-opacity-80 p-10 rounded-lg shadow-2xl w-[640px] h-[320px] flex flex-col items-center justify-center space-y-6"
         >
-          <h2 class="text-4xl font-bold text-yellow-300">Game ready</h2>
+          <h2
+            class="text-4xl font-bold text-yellow-300"
+            data-i18n="tournament.gameReady"
+          ></h2>
           <p id="matchup-text" class="text-3xl text-yellow-300"></p>
           <button
             id="round-btn"
             class="bg-red-900 text-yellow-300 px-6 py-2 rounded hover:bg-red-900 transition"
-          >
-            start round
-          </button>
+            data-i18n="tournament.start_round"
+          ></button>
           <div
             id="tournament-queue"
-            class="absolute top-4 right-4 bg-red-900 bg-opacity-80 text-yellow-300 p-4 rounded shadow-xl w-64 space-y-2 z-50"
+            class="absolute bottom-4 right-4 bg-red-900 bg-opacity-80 text-yellow-300 p-4 rounded shadow-xl w-64 space-y-2 z-50"
           >
             <h3 class="text-yellow-300-xl font-bold mb-2">Upcoming Matches</h3>
-            <ul id="match-queue-list" class="space-y-1">
-              <!-- Matches will be appended here -->
+            <ul id="match-queue-list" class="space-y-2">
+              <!-- JS will inject <li> elements here -->
             </ul>
           </div>
         </div>
@@ -298,29 +310,29 @@
       <div
         class="bg-red-800 bg-opacity-90 p-6 rounded-lg shadow-2xl w-[400px] flex flex-col items-center space-y-4"
       >
-        <h2 class="text-xl font-bold text-yellow-300" id="prompt-message">
-          Enter username
-        </h2>
+        <h2
+          class="text-xl font-bold text-yellow-300"
+          id="prompt-message"
+          data-i18n="prompt.enter_username"
+        ></h2>
         <input
           id="prompt-input"
           type="text"
           maxlength="10"
           class="px-4 py-2 rounded w-full text-black"
-          placeholder="Enter prompt"
+          placeholder=""
         />
         <div class="flex justify-end w-full space-x-2">
           <button
             id="prompt-cancel"
             class="px-4 py-1 bg-red-700 text-yellow-200 rounded hover:bg-red-600"
-          >
-            Cancel
-          </button>
+            data-i18n="prompt.cancel"
+          ></button>
           <button
             id="prompt-ok"
             class="px-4 py-1 bg-red-900 text-yellow-200 rounded hover:bg-red-800"
-          >
-            OK
-          </button>
+            data-i18n="prompt.ok"
+          ></button>
         </div>
       </div>
     </div>
@@ -331,15 +343,16 @@
       <div
         class="bg-red-800 bg-opacity-90 p-6 rounded-lg shadow-2xl w-[400px] flex flex-col items-center space-y-4"
       >
-        <h2 class="text-xl font-bold text-yellow-300" id="alert-message">
-          Alert Message
-        </h2>
+        <h2
+          class="text-xl font-bold text-yellow-300"
+          id="alert-message"
+          data-i18n="alert.message"
+        ></h2>
         <button
           id="alert-ok"
           class="px-4 py-1 bg-red-900 text-yellow-200 rounded hover:bg-red-800"
-        >
-          OK
-        </button>
+          data-i18n="alert.ok"
+        ></button>
       </div>
     </div>
   </body>

@@ -53,8 +53,14 @@ await server.register(swaggerUI, {
   },
 });
 
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET environment variable is required");
+}
+
 await server.register(jwt, {
-  secret: "cannel",
+  secret: JWT_SECRET,
 });
 
 server.decorate("authenticate", async function (request, reply) {

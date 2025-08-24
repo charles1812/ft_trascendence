@@ -20,7 +20,9 @@ import (
 )
 
 const (
+	// Winscore
 	WinScore = 3
+
 	// Game dimensions
 	GameWidth    = 1000 // Width of the game area
 	GameHeight   = 500  // Height of the game area
@@ -28,14 +30,10 @@ const (
 	PaddleHeight = 100  // Height of the paddles
 	BallSize     = 10   // Diameter of the ball
 
-	// Game settings
-	BallSpeed   = 5.0
-	PaddleSpeed = 5.0
-
 	// Game X Y pos
 	CenterX      = GameWidth / 2
 	CenterY      = GameHeight / 2
-	PaddleOffset = 1 // Distance from the edge of the screen (game units)
+	PaddleOffset = 1
 )
 
 var (
@@ -47,7 +45,6 @@ var (
 	RightPaddleX = GameWidth - PaddleWidth - PaddleOffset
 )
 
-// LocalGameState extends the API GameState with local game state
 type LocalGameState struct {
 	GameState api.GameState
 }
@@ -58,7 +55,6 @@ type winEvent struct {
 	EndTime time.Time
 }
 
-// Start Pong game with it's game ID
 func StartGame(client *api.Client, gameID string, playerNumber int) {
 	screen, err := tcell.NewScreen()
 	if err != nil {
@@ -79,7 +75,7 @@ func StartGame(client *api.Client, gameID string, playerNumber int) {
 	forceStopChan := make(chan struct{})
 
 	winChan := make(chan winEvent)
-	//defer close(winChan)
+	defer close(winChan)
 	done := make(chan struct{})
 	go handleWinEvents(screen, winChan, done)
 
@@ -93,8 +89,6 @@ func StartGame(client *api.Client, gameID string, playerNumber int) {
 		time.Sleep(100 * time.Millisecond)
 		conn.Close()
 	}()
-
-	// initial state fetched from WebSocket
 	var localState *LocalGameState
 	select {
 	case initial := <-gameStateChan:
@@ -107,18 +101,6 @@ func StartGame(client *api.Client, gameID string, playerNumber int) {
 	case <-time.After(3 * time.Second):
 		log.Fatal("Timed out waiting for initial game state from WebSocket")
 	}
-
-	/*
-			if localState.GameState.Pause {
-		    if upd, err := client.SetPause(gameID, false); err != nil {
-		        log.Printf("auto-unpause failed: %v", err)
-		    } else {
-		        localState.GameState = *upd
-		    }
-		}
-	*/
-
-	// Events poller
 	eventQueue := make(chan tcell.Event, 100)
 	go func() {
 		for {
@@ -128,10 +110,15 @@ func StartGame(client *api.Client, gameID string, playerNumber int) {
 	ticker := time.NewTicker(16 * time.Millisecond)
 	defer ticker.Stop()
 
+	tickerPaddle := time.NewTicker(50 * time.Millisecond)
+	defer tickerPaddle.Stop()
+
 	keyStates := make(map[string]bool)
 	lastKeyPress := time.Now()
 
 	winDetected := false
+	var updated *api.GameState
+
 gameLoop:
 	for {
 		select {
@@ -139,18 +126,11 @@ gameLoop:
 			switch ev := event.(type) {
 			case *tcell.EventKey:
 				lastKeyPress = time.Now()
-				if ev.Key() == tcell.KeyEsc || ev.Key() == tcell.KeyCtrlC {
-				}
 				if ev.Key() == tcell.KeyCtrlSpace {
-					newPause := !localState.GameState.Pause
-					updated, err := client.SetPause(gameID, newPause)
-					if err != nil {
-						log.Printf("Pause failed: %v", err)
-					} else {
-						localState.GameState.Pause = newPause
-						localState.GameState = *updated
-					}
-					continue
+					updated, err = client.Unpause(localState.GameState.ID)
+				}
+				if ev.Key() == tcell.KeyEsc || ev.Key() == tcell.KeyCtrlC {
+					return
 				}
 				var action string
 				switch ev.Key() {
@@ -178,7 +158,7 @@ gameLoop:
 
 			}
 
-		case updated := <-gameStateChan:
+		case updated = <-gameStateChan:
 			if updated != nil {
 				localState.GameState = *updated
 				localState.GameState.Pause = updated.Pause
@@ -189,20 +169,16 @@ gameLoop:
 						break gameLoop
 					}
 				}
-				if localState.GameState.Players[0].Player.Score >= 3 || localState.GameState.Players[1].Player.Score >= 3 {
-					localState.GameState.Pause = true
-				}
+			}
+
+		case <-tickerPaddle.C:
+			if time.Since(lastKeyPress) > 16*time.Millisecond && !localState.GameState.Pause {
+				sendMoveFromAction(conn, playerNumber, "up", false)
 			}
 
 		case <-ticker.C:
-			if time.Since(lastKeyPress) > 64*time.Millisecond && !localState.GameState.Pause {
-				sendMoveFromAction(conn, playerNumber, "up", false)
-			}
 			screen.Clear()
 			drawGameStateTcell(screen, &localState.GameState)
-			if localState.GameState.Pause && !winDetected {
-				drawPausedOverlay(screen)
-			}
 
 			screen.Show()
 		default:
@@ -217,7 +193,6 @@ gameLoop:
 			break gameLoop
 
 		case <-sigChan:
-			// optional: handle Ctrl+C if you like
 			break gameLoop
 		}
 	}
@@ -225,7 +200,6 @@ gameLoop:
 	return
 }
 
-// fetchInitialGameState attempts to get the game state with retries
 func fetchInitialGameState(client *api.Client, gameID string, maxRetries int) (*api.GameState, error) {
 	var (
 		game *api.GameState
@@ -249,11 +223,11 @@ func listenGameWebSocket(
 	forceStopChan chan struct{},
 ) (*websocket.Conn, error) {
 
-	url := fmt.Sprintf("wss://localhost/ws/game/%s?token=%s", gameID, client.GetToken())
+	url := fmt.Sprintf("wss://localhost:1443/ws/game/%s?token=%s", gameID, client.GetToken())
 
 	header := http.Header{}
 	header.Set("Authorization", "Bearer "+client.GetToken())
-	header.Set("Origin", "https://localhost")
+	header.Set("Origin", "https://localhost:1443")
 
 	dialer := websocket.Dialer{
 		TLSClientConfig: &tls.Config{
@@ -285,21 +259,18 @@ func listenGameWebSocket(
 			default:
 				_, msg, err := conn.ReadMessage()
 				if err != nil {
-					// Correct handling: normal close vs error
 					if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
 						log.Printf("WebSocket closed normally")
 					} else {
 						log.Printf("WebSocket read error: %v", err)
 					}
-					return // exit loop & defer closes forceStopChan
+					return
 				}
 
 				if len(msg) == 0 {
 					log.Printf("Received empty message: ignoring")
 					continue
 				}
-
-				// Parse typed message
 				var typedMsg struct {
 					Type    string          `json:"type"`
 					Payload json.RawMessage `json:"payload"`
@@ -376,23 +347,20 @@ func detectWin(state LocalGameState, playerNumber int) *winEvent {
 	case p1.Won && !p0.Won:
 		winner = p1.Username
 	default:
-		// 2) Fallback to score threshold
 		if p0.Score >= WinScore || p1.Score >= WinScore {
 			if p0.Score > p1.Score {
 				winner = p0.Username
 			} else if p1.Score > p0.Score {
 				winner = p1.Username
 			} else {
-				// perfect tie (unlikely) → no win
+				// tie
 				return nil
 			}
 		} else {
-			// nobody’s reached the threshold yet
+			// no one won yet
 			return nil
 		}
 	}
-
-	// 3) Compute youWon by matching usernames, not by index
 	localIdx := playerNumber - 1
 	localName := state.GameState.Players[localIdx].Player.Username
 	youWon := (localName == winner)
@@ -405,7 +373,11 @@ func detectWin(state LocalGameState, playerNumber int) *winEvent {
 }
 
 func handleWinEvents(screen tcell.Screen, winChan <-chan winEvent, done chan<- struct{}) {
-	ev := <-winChan
+	ev, ok := <-winChan
+	if !ok {
+		close(done)
+		return
+	}
 	drawWinPage(screen, ev.EndTime, ev.YouWon, ev.Winner)
 	drawEndPage(screen, time.Now(), "GAME ENDED")
 	close(done)

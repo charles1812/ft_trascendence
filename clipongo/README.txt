@@ -1,10 +1,3 @@
-Todo :
-
-         Ctrl-C Esc startgame a enlever
-
-         clean
-
-         unpause quand cli vs cli 
 
 ======================================================================
 
@@ -23,7 +16,7 @@ Todo :
      * Go (>=1.20)
          if not installed -> sudo apt-get -y install golang-go
      * GNU Make
-     * A running Clipongo API server at http://localhost:3000
+     * A running Clipongo API server at http://localhost:1443
 
   2. Build the CLI
      In your project root, run:
@@ -47,27 +40,25 @@ Todo :
   3. Hosting (choose 1)
      * Enter your opponent’s username.
      * Wait for them to join.
-     * A Game ID will display—game begins!
+     * A Game will appear on screen !
 
   4. Joining (choose 2)
      * View available games hosted by friends.
      * Enter the number of the game to join (0 to cancel).
-     * Pong starts in your terminal.
+     * When joining the game will be paused so you need to unpause the game by pressing Ctrl + Space
 
   5. Controls
      * W or ↑  — Move paddle up
      * S or ↓  — Move paddle down
-     * Ctrl+Space — Pause / resume
-     * Esc or Ctrl+C — Quit game
 
   Exit & Logout
   ───────────────
-  * To quit from main menu, select option 3 (Logout) or use Ctrl+C.
-  * In-game, press Esc or Ctrl+C to exit immediately.
-  * To switch users, logout and re-run `./cli`.
+  * To quit from main menu, select option 3 (Logout) then select option 2 (Exit).
+  * In-game, press Esc or Ctrl+C to exit the ongoing game.
+  * To switch users, logout and login again.
 
   Tips
   ───────────────
-  * Resize your terminal for more play area.
+  * You can resize the terminal.
 
   Enjoy the match !

@@ -94,6 +94,14 @@ func (c *Client) CreateGame(opponent string) (*GameState, error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.token)
 
+	c.httpClient = &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send request: %w", err)
@@ -117,27 +125,27 @@ func (c *Client) CreateGame(opponent string) (*GameState, error) {
 	return &game, nil
 }
 
-// GetGameState retrieves the current game state by ID.
-// It sends a GET request to the server's /api/game/{id} endpoint.
-// Requires an authorization token in the "Authorization" header.
 func (c *Client) GetGameState(gameID string) (*GameState, error) {
-	// Create a new request
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/game/%s", c.baseURL, gameID), nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %v", err)
 	}
 
-	// Add the required Authorization header
 	req.Header.Add("Authorization", "Bearer "+c.token)
 
-	// Send the request
+	c.httpClient = &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get game state: %v", err)
 	}
 	defer resp.Body.Close()
-
-	// Read the response body first to include it in error messages
 	body, _ := io.ReadAll(resp.Body)
 
 	if resp.StatusCode == http.StatusNotFound {
@@ -158,19 +166,16 @@ func (c *Client) GetGameState(gameID string) (*GameState, error) {
 	if err := json.Unmarshal(body, &game); err != nil {
 		return nil, fmt.Errorf("failed to decode game state: %v", err)
 	}
-
 	return &game, nil
 }
 
 func (c *Client) Authenticate(username string) (string, error) {
-	// Prepare payload
 	payload := AuthRequest{Username: username}
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal auth payload: %w", err)
 	}
 
-	// Create request
 	req, err := http.NewRequestWithContext(
 		context.Background(),
 		http.MethodPost,
@@ -189,14 +194,12 @@ func (c *Client) Authenticate(username string) (string, error) {
 			},
 		},
 	}
-	// Send request
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to send auth request: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// Parse response
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("authentication failed: %s", resp.Status)
 	}
@@ -220,9 +223,6 @@ func (c *Client) GetUsername() string {
 	return c.username
 }
 
-// ListGames retrieves a list of all available multiplayer games.
-// It sends a GET request to the server's /api/games endpoint.
-// Requires an authorization token in the "Authorization" header.
 func (c *Client) ListGames() ([]GameState, error) {
 	req, err := http.NewRequest(
 		http.MethodGet,
@@ -235,6 +235,14 @@ func (c *Client) ListGames() ([]GameState, error) {
 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.GetToken())
+
+	c.httpClient = &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		},
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -259,33 +267,41 @@ func (c *Client) ListGames() ([]GameState, error) {
 	return games, nil
 }
 
-func (c *Client) SetPause(gameID string, pause bool) (*GameState, error) {
-	var endpoint string
-	if pause {
-		endpoint = fmt.Sprintf("%s/api/game/%s/pause", c.baseURL, gameID)
-	} else {
-		endpoint = fmt.Sprintf("%s/api/game/%s/unpause", c.baseURL, gameID)
+func (c *Client) Unpause(gameID string) (*GameState, error) {
+	if gameID == "" {
+		return nil, nil
 	}
-	req, err := http.NewRequest(http.MethodPost, endpoint, nil)
+
+	url := fmt.Sprintf("%s/api/game/%s/unpause", c.baseURL, gameID)
+	req, err := http.NewRequest(http.MethodPost, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create pause/unpause request: %v", err)
+		return nil, fmt.Errorf("failed to create unpause request: %w", err)
 	}
 	req.Header.Set("Authorization", "Bearer "+c.token)
+
+	c.httpClient = &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send pause/unpause request: %v", err)
+		return nil, fmt.Errorf("failed to send unpause request: %w", err)
 	}
 	defer resp.Body.Close()
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
+		return nil, fmt.Errorf("failed to read unpause response: %w", err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("pause/unpause request failed: status %d, body: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("unpause failed: status %d, body: %s", resp.StatusCode, string(body))
 	}
+
 	var game GameState
 	if err := json.Unmarshal(body, &game); err != nil {
-		return nil, fmt.Errorf("failed to decode game state: %w (response: %s)", err, string(body))
+		return nil, fmt.Errorf("failed to decode GameState: %w (body: %s)", err, string(body))
 	}
 	return &game, nil
 }

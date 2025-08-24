@@ -1,7 +1,1 @@
 @import "tailwindcss";
-
-.game-wrapper {
-  content: "";
-  display: block;
-  padding-top: 50%; /* Center the container */
-}

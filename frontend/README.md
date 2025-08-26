@@ -2,12 +2,10 @@
 
 ## How to run
 
-```sh
-yarn dev
-```
+docker compose build --no-cache
 
-or
+docker compose up
 
-```sh
-yarn dev
-```
+# navigator:
+
+http://transcendence.localhost:1080

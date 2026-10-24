@@ -260,10 +260,16 @@ const demoUi = (() => {
   let pads: HTMLElement | null = null;
   let board: HTMLElement | null = null;
 
+  // Mobile browsers widen the layout viewport to fit the 1000 px board, so
+  // innerWidth alone can't be trusted there; screen.width is the real width.
+  function viewportWidth() {
+    return Math.min(window.innerWidth, screen.width || Infinity);
+  }
+
   function fitBoard() {
     board ??= document.getElementById("game-container")?.parentElement ?? null;
     if (!board) return;
-    const scale = Math.min(1, (window.innerWidth - 16) / 1000);
+    const scale = Math.min(1, (viewportWidth() - 16) / 1000);
     board.style.zoom = scale < 1 ? String(scale) : "";
   }
 
@@ -295,7 +301,7 @@ const demoUi = (() => {
   }
 
   function needsTouch() {
-    return matchMedia("(pointer: coarse)").matches || window.innerWidth < 820;
+    return matchMedia("(pointer: coarse)").matches || viewportWidth() < 820;
   }
 
   function mount() {

@@ -1,0 +1,5 @@
+{
+  "extends": "../frontend/tsconfig.json",
+  "compilerOptions": { "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker.ImportScripts"], "types": [] },
+  "include": ["*.ts", "../frontend/src/vite-env.d.ts"]
+}
